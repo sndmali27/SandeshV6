@@ -87,7 +87,7 @@ function goToday(){let d=new Date();cur=new Date(d.getFullYear(),d.getMonth(),1)
 function showUpcoming(){let now=new Date(),items=events.filter(e=>new Date(e.date)>=new Date(now.getFullYear(),now.getMonth(),now.getDate())).slice(0,5);if(!items.length)items=events.slice(-5);document.getElementById('upcoming').innerHTML=items.map(e=>`<div class="listItem"><strong>${e.date.split('-').reverse().join('-')}</strong> — ${e.title}</div>`).join('')}
 function showYear(){let y=document.getElementById('year');y.classList.remove('hidden');y.innerHTML='<div class="sectionTitle">📊 २०२६–२७ वार्षिक आढावा <button class="linkBtn" onclick="document.getElementById(\'year\').classList.add(\'hidden\')">बंद करा</button></div><div class="list"><div class="listItem">📚 कामकाजाचे दिवस: <strong>२३७</strong></div><div class="listItem">🏖️ उन्हाळी सुट्टी: <strong>२ मे ते १४ जून २०२७</strong></div><div class="listItem">🪔 दिवाळी सुट्टी: <strong>५ ते १७ नोव्हेंबर २०२६</strong></div><div class="listItem">📌 रविवार वगळता सुट्ट्या: <strong>७६</strong></div><div class="listItem">📌 स्रोत: जिल्हा परिषद, नंदुरबार — दिलेला २०२६–२७ शैक्षणिक सुट्टी तक्ता.</div></div>';y.scrollIntoView({behavior:'smooth'})}
 
-let currentTab='home',handlingBack=false,backArmedAt=0;
+let currentTab='home';
 const TAB_NAMES=['home','calendar','panchang','education','more'];
 
 function activateTab(name){
@@ -114,44 +114,24 @@ function setTab(name,push=true){
     return;
   }
   if(push){
-    history.pushState({chhutiwalaTab:name},'',location.pathname+location.search+'#'+name);
-  }
-  activateTab(name);
-}
-
-function handleBack(){
-  const state=history.state;
-  const hash=location.hash.slice(1);
-  const prev=state&&TAB_NAMES.includes(state.chhutiwalaTab)?state.chhutiwalaTab:(TAB_NAMES.includes(hash)?hash:'home');
-
-  if(prev!==currentTab){
-    activateTab(prev);
-    return;
-  }
-
-  if(currentTab==='home'){
-    const now=Date.now();
-    if(now-backArmedAt<1800){
-      backArmedAt=0;
-      history.go(-1);
-      return;
-    }
-    backArmedAt=now;
-    alert('मुख्य पानावर आहात. अ‍ॅप बंद करण्यासाठी पुन्हा Back दाबा.');
-    history.pushState({chhutiwalaTab:'home'},'',location.pathname+location.search+'#home');
+    location.hash=name;
   }else{
-    activateTab('home');
-    history.replaceState({chhutiwalaTab:'home'},'',location.pathname+location.search+'#home');
+    activateTab(name);
   }
 }
 
-window.addEventListener('popstate',handleBack);
+function handleHashChange(){
+  const name=location.hash.replace(/^#/,'');
+  activateTab(TAB_NAMES.includes(name)?name:'home');
+}
+
+window.addEventListener('hashchange',handleHashChange);
 
 function initTabHistory(){
-  const hash=location.hash.slice(1);
+  const hash=location.hash.replace(/^#/,'');
   const initial=TAB_NAMES.includes(hash)?hash:'home';
   currentTab='';
-  history.replaceState({chhutiwalaTab:initial},'',location.pathname+location.search+'#'+initial);
+  if(!TAB_NAMES.includes(hash)) history.replaceState(null,'','#home');
   activateTab(initial);
 }
 function updateHome(){let d=new Date();document.getElementById('heroDate').textContent=titleDate(d);let ev=map[key(d)]||[];document.getElementById('heroSummary').textContent=ev.length?ev.map(e=>e.title).join(' • '):(d.getDay()===0?'रविवार':'शाळेचा नियमित कामकाजाचा दिवस');let now=new Date(d.getFullYear(),d.getMonth(),d.getDate());let n=events.find(e=>new Date(e.date)>=now);document.getElementById('nextHoliday').innerHTML=n?`पुढील सुट्टी / नोंद: <b>${n.title}</b> • ${n.date.split('-').reverse().join('-')}`:'पुढील नोंद उपलब्ध नाही';let p=panchang[key(d)]||{};document.getElementById('hptithi').textContent=p.tithi||'—';document.getElementById('hpnak').textContent=p.nakshatra||'—';document.getElementById('hpyoga').textContent=p.yoga||'—';document.getElementById('hpsun').textContent=(p.sunrise&&p.sunset)?p.sunrise+' • '+p.sunset:'—';let items=events.filter(e=>new Date(e.date)>=now).slice(0,5);document.getElementById('homeUpcoming').innerHTML=items.map(e=>`<div class="listItem"><strong>${e.date.split('-').reverse().join('-')}</strong> — ${e.title}</div>`).join('')||'<div class="resultEmpty">पुढील नोंद उपलब्ध नाही.</div>';}
